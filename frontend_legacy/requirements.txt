@@ -1,0 +1,16 @@
+# ============================================
+# BLACK WALL - Frontend Dependencies
+# ============================================
+
+# --- Framework Dashboard ---
+streamlit==1.36.0
+
+# --- Graphiques interactifs ---
+plotly==5.22.0
+
+# --- Appels HTTP vers le Backend ---
+requests==2.32.3
+
+# --- Utilitaires ---
+python-dotenv==1.0.1
+pandas==2.2.2

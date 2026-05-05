@@ -1,0 +1,38 @@
+# ============================================
+# BLACK WALL - .gitignore
+# ============================================
+
+# Environment
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker volumes data
+postgres_data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ML Models (too large for Git)
+*.pkl
+*.joblib
+*.h5
+
+# Logs (user-specific data)
+wazuh_logs/*.json
+!wazuh_logs/sample_alert.json

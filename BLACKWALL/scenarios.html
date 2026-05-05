@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scénarios - BLACK WALL SIEM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        wall: { 900: '#0a0a0a', 800: '#141414', 700: '#262626', 600: '#404040', 500: '#525252', 400: '#a3a3a3', 300: '#d4d4d4', 200: '#e5e5e5', 100: '#f5f5f5' },
+                        accent: '#c8ff00',
+                        threat: { critical: '#ff4b4b', high: '#ff8c00', medium: '#ffc107', low: '#4caf50' }
+                    },
+                    fontFamily: { mono: ['"JetBrains Mono"', 'monospace'] }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'JetBrains Mono', monospace; background-color: #0a0a0a; color: #a3a3a3; }
+        .border-glow { border: 1px solid #262626; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .nav-link { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #a3a3a3; transition: color 0.2s; text-decoration: none; }
+        .nav-link:hover { color: #c8ff00; }
+        .mitre-badge { padding: 2px 6px; background: rgba(167, 139, 250, 0.15); border: 1px solid rgba(167, 139, 250, 0.3); color: #a78bfa; font-size: 9px; font-weight: 700; border-radius: 2px; }
+    </style>
+</head>
+<body class="antialiased pb-20">
+
+<!-- Navbar -->
+<nav class="border-b border-wall-700 bg-wall-900/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 lg:px-6 h-14 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <a href="index.html" class="flex items-center gap-2 text-wall-100 hover:text-accent transition-colors">
+                <i data-lucide="shield" class="w-5 h-5"></i>
+                <span class="font-black tracking-widest text-sm">BLACK WALL</span>
+            </a>
+            <div class="h-4 w-px bg-wall-700 hidden sm:block"></div>
+            <span class="font-mono text-[10px] text-wall-500 hidden sm:block">Scenarios & Threats</span>
+        </div>
+        <div class="flex items-center gap-6">
+            <a href="dashboard.html" class="nav-link hidden sm:block">Dashboard</a>
+            <a href="rules.html" class="nav-link hidden sm:block">Détection</a>
+            <a href="report.html" class="nav-link hidden sm:block">Rapport</a>
+            <a href="index.html" class="flex items-center gap-2 px-3 py-1.5 border border-wall-600 font-mono text-[10px] text-wall-300 hover:text-accent hover:border-accent transition-colors cursor-pointer">
+                <i data-lucide="arrow-left" class="w-3 h-3"></i> Retour
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="max-w-7xl mx-auto p-4 lg:p-8 space-y-8 mt-4">
+    
+    <div>
+        <h1 class="text-2xl lg:text-3xl font-black text-wall-100 uppercase tracking-tight mb-2">Catalogue des Scénarios</h1>
+        <p class="font-mono text-[11px] text-wall-400 max-w-4xl leading-relaxed">
+            Ce document répertorie les 5 comportements réseaux modélisés dans le simulateur BLACK WALL pour ce PFA. Il inclut le scénario "Baseline" (Trafic Normal) servant de groupe de contrôle, ainsi que 4 vecteurs d'attaque courants démontrant la polyvalence de la détection (Wazuh + Random Forest).
+        </p>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8">
+        
+        <!-- Scénario 1 : Baseline / Normal -->
+        <div class="border-glow bg-wall-900 border-t-2 !border-t-threat-low lg:col-span-2">
+            <div class="p-6 border-b border-wall-700 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-wall-800/20">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-threat-low/10 border border-threat-low/30 flex items-center justify-center">
+                        <i data-lucide="activity" class="w-5 h-5 text-threat-low"></i>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-mono text-threat-low uppercase tracking-widest font-bold mb-1">Scénario de Contrôle</div>
+                        <h2 class="text-lg font-bold text-wall-100">01. Baseline — Trafic Normal d'Entreprise</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-wall-900 border border-wall-700">
+                    <div class="text-right">
+                        <div class="font-mono text-[10px] text-wall-500">ML Risk Score</div>
+                        <div class="font-mono text-lg font-black text-threat-low">02 - 15</div>
+                    </div>
+                    <div class="h-8 w-px bg-wall-700"></div>
+                    <div class="text-left font-mono text-[9px] text-wall-400">
+                        <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-wall-500 rounded-full"></span> Aucun faux positif majeur</div>
+                        <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-threat-low rounded-full"></span> Statut : Monitoring passif</div>
+                    </div>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-2 p-6 gap-6">
+                <div>
+                    <h3 class="font-mono text-[11px] text-wall-200 uppercase tracking-widest mb-3 border-b border-wall-700 pb-2">Contexte & Comportement Réseau</h3>
+                    <p class="font-mono text-[10px] text-wall-400 leading-relaxed mb-4">
+                        Ce scénario simule l'activité légitime quotidienne des employés et services automatisés autorisés sur le réseau.
+                    </p>
+                    <ul class="space-y-2 font-mono text-[10px] text-wall-300">
+                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-threat-low mt-0.5 mt-0.5"></i> Fréquence très basse : ~10 à 50 événements par minute d'intérêt (login, cron, syscalls).</li>
+                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-threat-low mt-0.5"></i> Authentifications qui réussissent au 1er ou 2ème essai.</li>
+                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-threat-low mt-0.5"></i> Horaires réguliers (08:00 - 18:30).</li>
+                        <li class="flex items-start gap-2"><i data-lucide="check" class="w-3 h-3 text-threat-low mt-0.5"></i> Adresses IP connues ou géographiquement logiques.</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-mono text-[11px] text-wall-200 uppercase tracking-widest mb-3 border-b border-wall-700 pb-2">Chaîne de Détection Active</h3>
+                    <div class="space-y-3">
+                        <div class="bg-wall-800 p-2.5 border border-wall-700">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-mono text-[10px] text-wall-300"><span class="text-accent">Rule 5001</span> — User login success</span>
+                                <span class="wazuh-level level-low">3</span>
+                            </div>
+                        </div>
+                        <div class="bg-wall-800 p-2.5 border border-wall-700">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-mono text-[10px] text-wall-300"><span class="text-accent">Rule 5402</span> — Successful sudo to root</span>
+                                <span class="wazuh-level level-medium">4</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 pb-6">
+                <div class="bg-[#141414] p-3 text-[10px] font-mono text-threat-low border border-wall-700 overflow-x-auto whitespace-pre">
+{"timestamp": "2026-04-18T09:12:45.340Z", "agent": {"id": "001", "name": "ubuntu-vm"}, "rule": {"level": 3, "description": "sshd: authentication success for user devops", "id": "5001", "groups": ["syslog", "authentication", "success"]}, "srcip": "10.0.0.12", "location": "/var/log/auth.log"}
+                </div>
+            </div>
+        </div>
+
+        <!-- Scénario 2 : SSH Brute Force -->
+        <div class="border-glow bg-wall-900 border-t-2 !border-t-threat-critical">
+            <div class="p-5 border-b border-wall-700 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-wall-800/20">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-threat-critical/10 border border-threat-critical/30 flex items-center justify-center">
+                        <i data-lucide="unlock" class="w-5 h-5 text-threat-critical"></i>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-mono text-threat-critical uppercase tracking-widest font-bold mb-1">Attaque — T1110</div>
+                        <h2 class="text-md font-bold text-wall-100">02. SSH Brute Force</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <h3 class="font-mono text-[10px] text-wall-500 uppercase tracking-widest mb-1.5">Contexte & Comportement</h3>
+                    <p class="font-mono text-[10px] text-wall-300 leading-relaxed">
+                        Un script automatisé (ex: Hydra) tente de deviner le mot de passe du compte root via le port 22. Le comportement réseau se traduit par un pic soudain de milliers de paquets TCP SYN/ACK suivis de fermetures immédiates de session (Fail).
+                    </p>
+                </div>
+                <div>
+                    <h3 class="font-mono text-[10px] text-wall-500 uppercase tracking-widest mb-1.5">Détection Wazuh (Layer 1)</h3>
+                    <div class="bg-wall-800 p-2.5 border border-wall-700">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="wazuh-level level-critical">10</span>
+                            <span class="font-mono text-[10px] text-wall-200">Rule 5503 — SSH brute force attack</span>
+                        </div>
+                        <div class="font-mono text-[9px] text-wall-500">Seuil : > 50 failures / 30sec</div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-mono text-[10px] text-wall-500 uppercase tracking-widest mb-1.5">Validation Machine Learning (Layer 2)</h3>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="font-mono text-xl font-black text-threat-critical">87/100</span>
+                        <span class="font-mono text-[10px] text-[#a78bfa]">Confidence: 96%</span>
+                    </div>
+                    <div class="font-mono text-[9px] text-wall-400">Features activées : Vélocité anormale, Heure hors-bureau (01:00 AM).</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scénario 3 : SQL Injection -->
+        <div class="border-glow bg-wall-900 border-t-2 !border-t-threat-critical">
+            <div class="p-5 border-b border-wall-700 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-wall-800/20">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-threat-critical/10 border border-threat-critical/30 flex items-center justify-center">
+                        <i data-lucide="database" class="w-5 h-5 text-threat-critical"></i>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-mono text-threat-critical uppercase tracking-widest font-bold mb-1">Attaque — T1190</div>
+                        <h2 class="text-md font-bold text-wall-100">03. SQL Injection (WAF)</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <h3 class="font-mono text-[10px] text-wall-500 uppercase tracking-widest mb-1.5">Contexte & Comportement</h3>
+                    <p class="font-mono text-[10px] text-wall-300 leading-relaxed">
+                        Un attaquant tente de bypasser le formulaire d'authentification sur une application web exposée en injectant un payload SQL tautologique <code>' OR 1=1 --</code>. L'événement est capté par les logs Apache/Nginx.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="font-mono text-[10px] text-wall-500 uppercase tracking-widest mb-1.5">Détection Wazuh (Layer 1)</h3>
+                    <div class="bg-wall-800 p-2.5 border border-wall-700">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="wazuh-level level-critical">12</span>
+                            <span class="font-mono text-[10px] text-wall-200">Rule 31151 — SQL injection attempt detected</span>
+                        </div>
+                        <div class="font-mono text-[9px] text-wall-500">Seuil : Regex Pattern modsecurity</div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-mono text-[10px] text-wall-500 uppercase tracking-widest mb-1.5">Validation Machine Learning (Layer 2)</h3>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="font-mono text-xl font-black text-threat-critical">92/100</span>
+                        <span class="font-mono text-[10px] text-[#a78bfa]">Confidence: 98%</span>
+                    </div>
+                    <div class="font-mono text-[9px] text-wall-400">Features activées : Pattern payload hautement discriminant.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scénario 4 : ICMP Flood (DDoS) -->
+        <div class="border-glow bg-wall-900 border-t-2 !border-t-threat-high">
+            <div class="p-5 border-b border-wall-700 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-wall-800/20">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-threat-high/10 border border-threat-high/30 flex items-center justify-center">
+                        <i data-lucide="waves" class="w-5 h-5 text-threat-high"></i>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-mono text-threat-high uppercase tracking-widest font-bold mb-1">Attaque — T1498</div>
+                        <h2 class="text-md font-bold text-wall-100">04. ICMP Flood (DDoS)</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <h3 class="font-mono text-[10px] text-wall-500 uppercase tracking-widest mb-1.5">Contexte & Comportement</h3>
+                    <p class="font-mono text-[10px] text-wall-300 leading-relaxed">
+                        Saturation de la bande passante du pare-feu avec un volume massif de requêtes ping (ICMP Echo Request). L'objectif est de refuser le service aux utilisateurs légitimes. Taux dépassant allègrement la capacité du réseau.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="font-mono text-[10px] text-wall-500 uppercase tracking-widest mb-1.5">Détection Wazuh (Layer 1)</h3>
+                    <div class="bg-wall-800 p-2.5 border border-wall-700">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="wazuh-level level-high text-black">9</span>
+                            <span class="font-mono text-[10px] text-wall-200">Rule 100001 — ICMP flood detected</span>
+                        </div>
+                        <div class="font-mono text-[9px] text-wall-500">Seuil : > 10,000 pps (Packets per second)</div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-mono text-[10px] text-wall-500 uppercase tracking-widest mb-1.5">Validation Machine Learning (Layer 2)</h3>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="font-mono text-xl font-black text-threat-high">74/100</span>
+                        <span class="font-mono text-[10px] text-[#a78bfa]">Confidence: 89%</span>
+                    </div>
+                    <div class="font-mono text-[9px] text-wall-400">Features activées : Volume absolu de trafic réseau anormale, Saturation interface.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scénario 5 : Port Scan -->
+        <div class="border-glow bg-wall-900 border-t-2 !border-t-threat-high">
+            <div class="p-5 border-b border-wall-700 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-wall-800/20">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-threat-high/10 border border-threat-high/30 flex items-center justify-center">
+                        <i data-lucide="scan" class="w-5 h-5 text-threat-high"></i>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-mono text-threat-high uppercase tracking-widest font-bold mb-1">Reconnaissance — T1046</div>
+                        <h2 class="text-md font-bold text-wall-100">05. Network Port Scan</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <h3 class="font-mono text-[10px] text-wall-500 uppercase tracking-widest mb-1.5">Contexte & Comportement</h3>
+                    <p class="font-mono text-[10px] text-wall-300 leading-relaxed">
+                        Un adversaire map la topologie du réseau et les services ouverts à l'aide d'outils comme Nmap. Il envoie des paquets TCP furtifs (Stealth Scan) sur tous les ports allant de 1 à 1024 pour scruter les réponses (Open, Closed, Filtered).
+                    </p>
+                </div>
+                <div>
+                    <h3 class="font-mono text-[10px] text-wall-500 uppercase tracking-widest mb-1.5">Détection Wazuh (Layer 1)</h3>
+                    <div class="bg-wall-800 p-2.5 border border-wall-700">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="wazuh-level level-high text-black">7</span>
+                            <span class="font-mono text-[10px] text-wall-200">Rule 100002 — Port scan detected</span>
+                        </div>
+                        <div class="font-mono text-[9px] text-wall-500">Seuil : > 20 ports distincts en 5 secondes.</div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-mono text-[10px] text-wall-500 uppercase tracking-widest mb-1.5">Validation Machine Learning (Layer 2)</h3>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="font-mono text-xl font-black text-threat-high">62/100</span>
+                        <span class="font-mono text-[10px] text-[#a78bfa]">Confidence: 84%</span>
+                    </div>
+                    <div class="font-mono text-[9px] text-wall-400">Features activées : Incrémentation séquentielle de ports cibles.</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>

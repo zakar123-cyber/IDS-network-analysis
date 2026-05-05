@@ -1,0 +1,105 @@
+# ============================================
+# BLACK WALL - Docker Compose
+# ============================================
+# Orchestrateur principal du système IDS Pédagogique.
+#
+# Pour démarrer :  docker-compose up --build
+# Pour arrêter  :  docker-compose down
+# ============================================
+
+services:
+
+  # ------------------------------------------
+  # 1. BASE DE DONNÉES - PostgreSQL
+  # ------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: blackwall-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-blackwall_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_strong_password}
+      POSTGRES_DB: ${POSTGRES_DB:-blackwall_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - ids-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-blackwall_user} -d ${POSTGRES_DB:-blackwall_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ------------------------------------------
+  # 2. BACKEND - FastAPI (Moteur de Détection)
+  # ------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: blackwall-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-blackwall_user}:${POSTGRES_PASSWORD:-changeme_strong_password}@db:5432/${POSTGRES_DB:-blackwall_db}
+      STATIC_THRESHOLD_ALERT_LEVEL: ${STATIC_THRESHOLD_ALERT_LEVEL:-8}
+      STATIC_THRESHOLD_CONNECTIONS: ${STATIC_THRESHOLD_CONNECTIONS:-50}
+      # --- Alert Monitoring & AI ---
+      SAMBANOVA_API_KEY: ${SAMBANOVA_API_KEY:-}
+      SAMBANOVA_API_URL: ${SAMBANOVA_API_URL:-https://api.sambanova.ai/v1/chat/completions}
+      SAMBANOVA_MODEL: ${SAMBANOVA_MODEL:-DeepSeek-V3.1}
+      AI_ANALYSIS_ENABLED: ${AI_ANALYSIS_ENABLED:-true}
+      WAZUH_ALERTS_PATH: ${WAZUH_ALERTS_PATH:-/app/wazuh_logs/alerts.json}
+      ALERT_MIN_LEVEL: ${ALERT_MIN_LEVEL:-12}
+      # --- Email ---
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      ALERT_EMAIL_FROM: ${ALERT_EMAIL_FROM:-}
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-}
+      EMAIL_COOLDOWN_SECONDS: ${EMAIL_COOLDOWN_SECONDS:-300}
+    volumes:
+      # Map the source code for instant hot-reloading
+      - ./backend:/app
+      # Volume partagé : Déposez vos logs Wazuh ici !
+      - ./wazuh_logs:/app/wazuh_logs
+    ports:
+      - "8000:8000"
+    networks:
+      - ids-network
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ------------------------------------------
+  # 3. FRONTEND - Nginx (Dashboard BLACKWALL)
+  # ------------------------------------------
+  frontend:
+    image: nginx:alpine
+    container_name: blackwall-frontend
+    restart: unless-stopped
+    volumes:
+      - ./BLACKWALL:/usr/share/nginx/html:ro
+    ports:
+      - "8501:80"
+    networks:
+      - ids-network
+    depends_on:
+      - backend
+
+# ============================================
+# Réseau interne
+# ============================================
+networks:
+  ids-network:
+    driver: bridge
+    name: ids-network
+
+# ============================================
+# Volumes persistants
+# ============================================
+volumes:
+  postgres_data:
+    driver: local

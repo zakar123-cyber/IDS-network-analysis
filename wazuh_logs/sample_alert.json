@@ -1,0 +1,104 @@
+[
+  {
+    "timestamp": "2026-04-18T10:15:32.000+0000",
+    "rule": {
+      "id": "5710",
+      "level": 10,
+      "description": "sshd: Attempt to login using a denied user.",
+      "groups": ["syslog", "sshd", "authentication_failed"]
+    },
+    "agent": {
+      "id": "001",
+      "name": "ubuntu-server",
+      "ip": "192.168.1.100"
+    },
+    "data": {
+      "srcip": "10.0.0.55",
+      "dstuser": "root",
+      "program_name": "sshd"
+    },
+    "full_log": "Apr 18 10:15:32 ubuntu-server sshd[12345]: Failed password for invalid user root from 10.0.0.55 port 22 ssh2"
+  },
+  {
+    "timestamp": "2026-04-18T10:15:33.000+0000",
+    "rule": {
+      "id": "5710",
+      "level": 10,
+      "description": "sshd: Attempt to login using a denied user.",
+      "groups": ["syslog", "sshd", "authentication_failed"]
+    },
+    "agent": {
+      "id": "001",
+      "name": "ubuntu-server",
+      "ip": "192.168.1.100"
+    },
+    "data": {
+      "srcip": "10.0.0.55",
+      "dstuser": "admin",
+      "program_name": "sshd"
+    },
+    "full_log": "Apr 18 10:15:33 ubuntu-server sshd[12346]: Failed password for invalid user admin from 10.0.0.55 port 22 ssh2"
+  },
+  {
+    "timestamp": "2026-04-18T10:16:34.000+0000",
+    "rule": {
+      "id": "5712",
+      "level": 12,
+      "description": "sshd: brute force attack detected.",
+      "groups": ["syslog", "sshd", "authentication_failed", "brute_force"]
+    },
+    "agent": {
+      "id": "001",
+      "name": "ubuntu-server",
+      "ip": "192.168.1.100"
+    },
+    "data": {
+      "srcip": "10.0.0.55",
+      "dstuser": "root",
+      "program_name": "sshd"
+    },
+    "full_log": "Apr 18 10:15:34 ubuntu-server sshd[12347]: Failed password for root from 10.0.0.55 port 22 ssh2 (repeated 15 times)"
+  },
+  {
+    "timestamp": "2026-04-18T10:20:10.000+0000",
+    "rule": {
+      "id": "31101",
+      "level": 6,
+      "description": "Web server 404 error.",
+      "groups": ["web", "accesslog", "web_scan"]
+    },
+    "agent": {
+      "id": "002",
+      "name": "web-server",
+      "ip": "192.168.1.200"
+    },
+    "data": {
+      "srcip": "172.16.0.10",
+      "url": "/admin/config.php",
+      "id": "404",
+      "protocol": "GET"
+    },
+    "full_log": "172.16.0.10 - - [18/Apr/2026:10:20:10 +0000] \"GET /admin/config.php HTTP/1.1\" 404 287"
+  },
+  {
+    "timestamp": "2026-04-18T10:20:11.000+0000",
+    "rule": {
+      "id": "31103",
+      "level": 9,
+      "description": "SQL Injection attempt detected.",
+      "groups": ["web", "attack", "sql_injection"]
+    },
+    "agent": {
+      "id": "002",
+      "name": "web-server",
+      "ip": "192.168.1.200"
+    },
+    "data": {
+      "srcip": "172.16.0.10",
+      "url": "/login.php?id=1' OR '1'='1",
+      "id": "200",
+      "protocol": "GET"
+    },
+    "full_log": "172.16.0.10 - - [18/Apr/2026:10:20:11 +0000] \"GET /login.php?id=1' OR '1'='1 HTTP/1.1\" 200 540"
+  }
+]

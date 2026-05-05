@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rules & Logic - BLACK WALL SIEM</title>
+    <!-- Tailwind CSS (via CDN for standalone) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        wall: {
+                            900: '#0a0a0a',
+                            800: '#141414',
+                            700: '#262626',
+                            600: '#404040',
+                            500: '#525252',
+                            400: '#a3a3a3',
+                            300: '#d4d4d4',
+                            200: '#e5e5e5',
+                            100: '#f5f5f5',
+                        },
+                        accent: '#c8ff00',
+                        threat: {
+                            critical: '#ff4b4b',
+                            high: '#ff8c00',
+                            medium: '#ffc107',
+                            low: '#4caf50'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- JetBrains Mono Font -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'JetBrains Mono', monospace; background-color: #0a0a0a; color: #a3a3a3; }
+        .border-glow { border: 1px solid #262626; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .nav-link { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #a3a3a3; transition: color 0.2s; text-decoration: none; }
+        .nav-link:hover { color: #c8ff00; }
+        .mitre-badge { padding: 2px 6px; background: rgba(167, 139, 250, 0.15); border: 1px solid rgba(167, 139, 250, 0.3); color: #a78bfa; font-size: 9px; font-weight: 700; border-radius: 2px; }
+        /* Timeline */
+        .timeline-line { position: absolute; left: 1.5rem; top: 0; bottom: 0; width: 2px; background: #262626; }
+        .timeline-node { position: relative; z-index: 10; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: #0a0a0a; border: 2px solid #404040; display: flex; align-items: center; justify-content: center; }
+        .timeline-node.active { border-color: #c8ff00; color: #c8ff00; box-shadow: 0 0 10px rgba(200, 255, 0, 0.2); }
+        .timeline-node.ml { border-color: #a78bfa; color: #a78bfa; box-shadow: 0 0 10px rgba(167, 139, 250, 0.2); }
+        .wazuh-level { display: inline-flex; align-items: center; justify-content: center; width: 1.25rem; height: 1.25rem; border-radius: 9999px; font-size: 9px; font-weight: 700; color: #0a0a0a; }
+        .level-critical { background-color: #ff4b4b; }
+        .level-high { background-color: #ff8c00; }
+        .level-medium { background-color: #ffc107; }
+        .level-low { background-color: #4caf50; }
+    </style>
+</head>
+<body class="antialiased selection:bg-accent selection:text-black pb-20">
+
+<!-- Navbar -->
+<nav class="border-b border-wall-700 bg-wall-900/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 lg:px-6 h-14 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <a href="index.html" class="flex items-center gap-2 text-wall-100 hover:text-accent transition-colors">
+                <i data-lucide="shield" class="w-5 h-5"></i>
+                <span class="font-black tracking-widest text-sm">BLACK WALL</span>
+            </a>
+            <div class="h-4 w-px bg-wall-700 hidden sm:block"></div>
+            <span class="font-mono text-[10px] text-wall-500 hidden sm:block">Detection Rules & Logic</span>
+        </div>
+        <div class="flex items-center gap-6">
+            <a href="dashboard.html" class="nav-link hidden sm:block">Dashboard</a>
+            <a href="scenarios.html" class="nav-link hidden sm:block">Scénarios</a>
+            <a href="report.html" class="nav-link hidden sm:block">Rapport</a>
+            <a href="index.html" class="flex items-center gap-2 px-3 py-1.5 border border-wall-600 font-mono text-[10px] text-wall-300 hover:text-accent hover:border-accent transition-colors cursor-pointer">
+                <i data-lucide="arrow-left" class="w-3 h-3"></i> Retour
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="max-w-7xl mx-auto p-4 lg:p-8 space-y-8 mt-4">
+    
+    <!-- Title -->
+    <div>
+        <h1 class="text-2xl lg:text-3xl font-black text-wall-100 uppercase tracking-tight mb-2">Logique de Détection</h1>
+        <p class="font-mono text-[11px] text-wall-400 max-w-3xl leading-relaxed">
+            Cette page expose la double couche de sécurité du SIEM BLACK WALL. Elle documente le pipeline d'analyse, l'approche prédictive de l'IA, les limites inhérentes (faux positifs) et inclut le dictionnaire complet des règles de détection Wazuh sous-jacentes.
+        </p>
+    </div>
+
+    <!-- 1. Pipeline de Détection -->
+    <div class="border-glow bg-wall-900 p-6 lg:p-8">
+        <div class="flex items-center gap-3 mb-6">
+            <i data-lucide="git-merge" class="w-5 h-5 text-accent"></i>
+            <h2 class="text-sm font-bold text-wall-100 uppercase tracking-widest">Le Pipeline de Détection (Double Couche)</h2>
+        </div>
+        
+        <p class="font-mono text-[11px] text-wall-400 mb-8 max-w-3xl leading-relaxed">
+            Afin d'éviter de se fier uniquement à des signatures rigides, le trafic est d'abord filtré par Wazuh (Layer 1) puis soumis à un modèle de Machine Learning Random Forest (Layer 2) pour consolider la décision.
+        </p>
+
+        <div class="relative pl-6 sm:pl-12 py-4 max-w-4xl">
+            <div class="timeline-line"></div>
+            
+            <!-- Step 1 -->
+            <div class="relative mb-8">
+                <div class="timeline-node absolute -left-12 sm:-left-16 bg-wall-800 text-wall-400">
+                    <i data-lucide="hard-drive" class="w-3 h-3"></i>
+                </div>
+                <div class="pl-4 sm:pl-0">
+                    <h3 class="font-bold text-wall-200 text-xs mb-1">1. Ingestion — Endpoint / Network Log</h3>
+                    <p class="font-mono text-[10px] text-wall-500 max-w-xl">
+                        Un agent (ex: Ubuntu-VM) ou un capteur réseau génère un événement brut (fichier syslog, auth.log, apache access.log). Cet événement est envoyé au manager central.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="relative mb-8">
+                <div class="timeline-node active absolute -left-12 sm:-left-16">
+                    <i data-lucide="shield-check" class="w-3 h-3"></i>
+                </div>
+                <div class="pl-4 sm:pl-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
+                        <h3 class="font-bold text-accent text-xs">2. Layer 1 — Moteur de Règles Wazuh</h3>
+                        <span class="px-1.5 py-0.5 w-max bg-wall-800 border border-wall-700 text-[8px] uppercase tracking-widest text-wall-400">Signature</span>
+                    </div>
+                    <p class="font-mono text-[10px] text-wall-500 max-w-xl mb-3">
+                        Le log est analysé contre le dictionnaire de règles. Si une signature ou un seuil est franchi (ex: 5 échecs SSH successifs), une alerte initiale est générée avec un niveau de criticité (ex: Level 10).
+                    </p>
+                    <div class="bg-wall-800/50 border-l border-wall-700 p-2 text-[10px] font-mono text-wall-300 w-fit">
+                        <span class="text-wall-500">Exemple:</span> Rule 5503 (SSH Brute Force) déclenchée. Criticité: 10/15.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="relative mb-8">
+                <div class="timeline-node absolute -left-12 sm:-left-16 bg-wall-800 text-wall-400">
+                    <i data-lucide="cpu" class="w-3 h-3"></i>
+                </div>
+                <div class="pl-4 sm:pl-0">
+                    <h3 class="font-bold text-wall-200 text-xs mb-1">3. Extraction des Caractéristiques (Features)</h3>
+                    <p class="font-mono text-[10px] text-wall-500 max-w-xl">
+                        L'alerte brute est transformée en vecteur mathématique pour l'IA. Les données qualitatives sont converties en métriques quantitatives identifiables par les arbres de décision.
+                    </p>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        <span class="bg-wall-800 px-2 py-0.5 text-[9px] font-mono text-wall-400 border border-wall-700">Heure: 03:00 (Nuit)</span>
+                        <span class="bg-wall-800 px-2 py-0.5 text-[9px] font-mono text-wall-400 border border-wall-700">Freq: 120 evt/sec</span>
+                        <span class="bg-wall-800 px-2 py-0.5 text-[9px] font-mono text-wall-400 border border-wall-700">Fail ratio: 98%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="relative mb-8">
+                <div class="timeline-node ml absolute -left-12 sm:-left-16">
+                    <i data-lucide="brain" class="w-3 h-3"></i>
+                </div>
+                <div class="pl-4 sm:pl-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
+                        <h3 class="font-bold text-xs" style="color:#a78bfa">4. Layer 2 — Modèle Random Forest v2</h3>
+                        <span class="px-1.5 py-0.5 w-max border text-[8px] uppercase tracking-widest" style="background:rgba(167, 139, 250, .1); border-color:rgba(167, 139, 250, .3); color:#a78bfa">Comportemental</span>
+                    </div>
+                    <p class="font-mono text-[10px] text-wall-500 max-w-xl mb-3">
+                        Le modèle ML analyse les features extraites et les compare à sa baseline d'entraînement "Normal vs Suspect". Il génère un <b>Score de Risque de 0 à 100</b> et attribue une probabilité (Confidence). Le bruit habituel est isolé des attaques ciblées.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Step 5 -->
+            <div class="relative">
+                <div class="timeline-node absolute -left-12 sm:-left-16 border-threat-critical text-threat-critical bg-wall-900" style="box-shadow: 0 0 10px rgba(255, 75, 75, 0.2)">
+                    <i data-lucide="alert-triangle" class="w-3 h-3"></i>
+                </div>
+                <div class="pl-4 sm:pl-0">
+                    <h3 class="font-bold text-threat-critical text-xs mb-1">5. Alerte Finale & Remédiation</h3>
+                    <p class="font-mono text-[10px] text-wall-500 max-w-xl mb-2">
+                        Si Wazuh (Niveau > 7) ET le ML (Score > 70) concordent, l'analyste reçoit l'alerte sur le Dashboard. Une recommandation de mitigation est proposée et une action passive est loggée (simulant un blocage IP / WAF).
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-4 lg:gap-8">
+        <!-- 2. Section Faux Positifs -->
+        <div class="border-glow bg-wall-900 p-6 lg:p-8 h-full">
+            <div class="flex items-center gap-3 mb-6">
+                <i data-lucide="crosshair" class="w-5 h-5 text-wall-300"></i>
+                <h2 class="text-sm font-bold text-wall-100 uppercase tracking-widest">Limites & Faux Positifs</h2>
+            </div>
+            <p class="font-mono text-[11px] text-wall-400 mb-6 leading-relaxed">
+                Aucun système n'est infaillible. Le paramétrage actuel produit volontairement quelques faux positifs lors de processus IT légitimes, démontrant les limites des règles statiques.
+            </p>
+            <div class="space-y-4">
+                <div class="bg-wall-800/50 border-l-2 border-wall-500 p-3">
+                    <h4 class="font-bold text-xs text-wall-200 mb-1">Scanner de Vulnérabilité (ex: Nessus)</h4>
+                    <p class="font-mono text-[10px] text-wall-400 leading-relaxed mb-2">
+                        Le SIEM alerte sur un <span class="text-threat-high">Port Scan (Rule 100002)</span> lors d'un audit interne mensuel planifié.
+                    </p>
+                    <div class="font-mono text-[10px] text-wall-500"><b class="text-accent">Solution métier :</b> Créer une whitelist pour l'IP du serveur de scan dans la surcouche de règle Wazuh.</div>
+                </div>
+                <div class="bg-wall-800/50 border-l-2 border-wall-500 p-3">
+                    <h4 class="font-bold text-xs text-wall-200 mb-1">Scripts de Backup & Monitoring</h4>
+                    <p class="font-mono text-[10px] text-wall-400 leading-relaxed mb-2">
+                        Un serveur de supervision effectue des pings de santé très agressifs sur l'infrastructure (100 req/sec). Résultat : Fausse alerte <span class="text-threat-high">ICMP Flood (Rule 100001)</span>.
+                    </p>
+                    <div class="font-mono text-[10px] text-wall-500"><b class="text-[#a78bfa]">Correction IA :</b> Le modèle ML baisse fortement le score de risque s'il note que la fréquence réseau est parfaitement consistante dans le temps (un humain/bot aléatoire est plus erratique).</div>
+                </div>
+                <div class="bg-wall-800/50 border-l-2 border-wall-500 p-3">
+                    <h4 class="font-bold text-xs text-wall-200 mb-1">Oubli de Mot de Passe Massif</h4>
+                    <p class="font-mono text-[10px] text-wall-400 leading-relaxed mb-2">
+                        Un utilisateur légitime tente 5 fois de suite son mot de passe un lundi matin après ses congés. Wazuh déclenche une alerte <span class="text-threat-medium">Rule 5501</span>.
+                    </p>
+                    <div class="font-mono text-[10px] text-wall-500"><b class="text-[#a78bfa]">Correction IA :</b> L'IA classe ceci en risque FAIBLE car l'incident survient à une heure de bureau habituelle (08h00-09h00).</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ML Explicatif -->
+        <div class="border-glow bg-wall-900 p-6 lg:p-8 h-full">
+            <div class="flex items-center gap-3 mb-6">
+                <i data-lucide="network" class="w-5 h-5 text-[#a78bfa]"></i>
+                <h2 class="text-sm font-bold text-wall-100 uppercase tracking-widest">Random Forest v2 — L'Extracteur</h2>
+            </div>
+            <p class="font-mono text-[11px] text-wall-400 mb-6 leading-relaxed">
+                Le modèle ML de la couche 2 ne lit pas la signature en texte brut (le "payload"). Il se concentre exclusivement sur une analyse comportementale en vectorisant le méta-contexte de la requête.
+            </p>
+            <div class="space-y-5">
+                <div class="flex items-start gap-3">
+                    <div class="w-7 h-7 rounded-md bg-[#a78bfa]/10 flex items-center justify-center border border-[#a78bfa]/30 flex-shrink-0 mt-0.5">
+                        <i data-lucide="clock" class="w-3.5 h-3.5 text-[#a78bfa]"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-wall-200 mb-1">Horaire (Time Profile Feature)</h4>
+                        <p class="font-mono text-[10px] text-wall-400 leading-relaxed">Le poids décisionnel de cette feature est très élevé.<br/> 100 tentatives de connexion à 10h00 sont très différentes comportementalement de 100 tentatives de connexion à 03h00 du matin sur un serveur d'entreprise.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-7 h-7 rounded-md bg-[#a78bfa]/10 flex items-center justify-center border border-[#a78bfa]/30 flex-shrink-0 mt-0.5">
+                        <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-[#a78bfa]"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-wall-200 mb-1">Vélocité (Events per second / minute)</h4>
+                        <p class="font-mono text-[10px] text-wall-400 leading-relaxed">Le modèle détecte qu'aucun humain normal ne peut envoyer une requête POST sur `/api/login` à la fréquence mécanique de 50 fois par seconde continuellement (Outil d'automatisation Hydra / Custom Script).</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-7 h-7 rounded-md bg-[#a78bfa]/10 flex items-center justify-center border border-[#a78bfa]/30 flex-shrink-0 mt-0.5">
+                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-[#a78bfa]"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-wall-200 mb-1">Diversité Réseau (Geo-clustering)</h4>
+                        <p class="font-mono text-[10px] text-wall-400 leading-relaxed">Un comportement suspect provenant d'une IP isolée est gérable. Le même comportement provenant simultanément de dizaines d'IPs différentes déclenchera dramatiquement le score de risque (DDoS, Botnet distribué).</p>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- 3. Table des règles -->
+    <div class="border-glow bg-wall-900 overflow-hidden" id="rulesDict">
+        <div class="p-4 lg:p-6 border-b border-wall-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-sm font-bold text-wall-100 uppercase tracking-widest flex items-center gap-2"><i data-lucide="list" class="w-4 h-4 text-accent"></i> Dictionnaire des Règles Wazuh</h2>
+                <div class="font-mono text-[10px] text-wall-500 mt-1">Niveaux standards OSSEC/Wazuh (1-4 = Bas, 5-7 = Moyen, 8-11 = Haut, 12-15 = Critique)</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <select id="ruleCategoryFilter" class="bg-wall-800 border border-wall-600 text-wall-200 font-mono text-[10px] px-3 py-1.5 focus:border-accent outline-none cursor-pointer">
+                    <option value="all">Filtre : Toutes Catégories</option>
+                    <option value="sshd">Catégorie : SSH / Authentication</option>
+                    <option value="web">Catégorie : Web / WAF</option>
+                    <option value="firewall">Catégorie : Réseau / Pare-feu</option>
+                    <option value="syslog">Catégorie : Audit / Système</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Table -->
+        <div class="w-full overflow-x-auto">
+            <div class="min-w-[800px]">
+                <div class="grid grid-cols-12 gap-2 px-4 py-3 border-b border-wall-700 bg-wall-800/40">
+                    <div class="col-span-1 font-mono text-[9px] tracking-widest text-wall-500 uppercase">ID Règle</div>
+                    <div class="col-span-1 font-mono text-[9px] tracking-widest text-wall-500 uppercase">Lvl</div>
+                    <div class="col-span-3 font-mono text-[9px] tracking-widest text-wall-500 uppercase">Description Native</div>
+                    <div class="col-span-4 font-mono text-[9px] tracking-widest text-wall-500 uppercase">Seuil de Déclenchement (Pédagogique)</div>
+                    <div class="col-span-1 font-mono text-[9px] tracking-widest text-wall-500 uppercase">Groupe</div>
+                    <div class="col-span-2 font-mono text-[9px] tracking-widest text-wall-500 uppercase">MITRE ATT&CK Tag</div>
+                </div>
+                <div id="rulesTableContainer" class="divide-y divide-wall-700/50">
+                    <!-- JS Injected Rules -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    lucide.createIcons();
+
+    const wazuhRules=[
+        {id:5503,description:'SSH brute force attack',level:10,groups:['sshd'],mitre:{id:'T1110',name:'Brute Force'},threshold_desc:'> 50 échecs de connexion SSH en 30 secondes'},
+        {id:5551,description:'Multiple authentication failures',level:10,groups:['sshd'],mitre:{id:'T1110',name:'Brute Force'},threshold_desc:'> 10 échecs de connexion depuis la même IP'},
+        {id:31151,description:'SQL injection attempt detected',level:12,groups:['web'],mitre:{id:'T1190',name:'Exploit Public-Facing'},threshold_desc:'Regex MATCH : keywords SQL (SELECT, DROP, UNION)'},
+        {id:100001,description:'ICMP flood detected',level:9,groups:['firewall'],mitre:{id:'T1498',name:'Network DoS'},threshold_desc:'> 10 000 paquets ICMP par seconde depuis une IP'},
+        {id:1002,description:'Unknown problem in system log',level:2,groups:['syslog'],mitre:null,threshold_desc:'Mot-clé "ERROR" ou "WARN" générique dans syslog'},
+        {id:5501,description:'Login attempt failed',level:5,groups:['sshd'],mitre:{id:'T1110',name:'Brute Force'},threshold_desc:'1 échec de connexion (Password incorrect)'},
+        {id:100002,description:'Port scan detected',level:7,groups:['firewall'],mitre:{id:'T1046',name:'Network Service Scan'},threshold_desc:'> 20 ports contactés en moins de 5 secondes depuis la même IP'},
+        {id:5001,description:'User authentication success',level:3,groups:['syslog'],mitre:{id:'T1078',name:'Valid Accounts'},threshold_desc:'Connexion réussie acceptée par le système'},
+        {id:510,description:'Firewall rule triggered — dropped packet',level:6,groups:['firewall'],mitre:null,threshold_desc:'Paquet bloqué par iptables (Default DROP)'},
+        {id:5712,description:'SSH scan from single source IP',level:8,groups:['sshd'],mitre:{id:'T1046',name:'Network Service Scan'},threshold_desc:'Connexions SSH multiples sans complétion d\'authentification'},
+        {id:80101,description:'Malicious user agent detected',level:11,groups:['web'],mitre:{id:'T1190',name:'Exploit Public-Facing'},threshold_desc:'User-Agent matching outils connus (Nmap, Nikto)'},
+        {id:40101,description:'Privilege escalation attempt',level:14,groups:['syslog'],mitre:{id:'T1068',name:'Priv. Escalation'},threshold_desc:'Accès suspect à /etc/shadow ou exécution binaire SUID'},
+        {id:31168,description:'HTTP flood — DDoS pattern',level:11,groups:['web'],mitre:{id:'T1498',name:'Network DoS'},threshold_desc:'> 500 requêtes HTTP/s vers la même URI'},
+        {id:5402,description:'Successful sudo to root',level:4,groups:['syslog'],mitre:{id:'T1078',name:'Valid Accounts'},threshold_desc:'Commande sudo exécutée avec succès pour élever les privilèges'}
+    ];
+
+    function getLvlClass(l){return l>=10?'level-critical':l>=7?'level-high':l>=4?'level-medium':'level-low';}
+
+    const container = document.getElementById('rulesTableContainer');
+    
+    function renderRules(filterGrp) {
+        container.innerHTML = '';
+        const rulesToRender = filterGrp === 'all' ? wazuhRules : wazuhRules.filter(r => r.groups.includes(filterGrp));
+        
+        rulesToRender.forEach(r => {
+            const mit = r.mitre ? `<span class="mitre-badge">${r.mitre.id} — ${r.mitre.name}</span>` : '<span class="font-mono text-[10px] text-wall-500">—</span>';
+            const html = `
+                <div class="grid grid-cols-12 gap-2 px-4 py-3 hover:bg-wall-800 transition-colors items-center">
+                    <div class="col-span-1 font-mono text-[10px] text-accent font-bold">${r.id}</div>
+                    <div class="col-span-1 flex justify-start"><span class="wazuh-level ${getLvlClass(r.level)}">${r.level}</span></div>
+                    <div class="col-span-3 font-mono text-[10px] text-wall-200 font-bold truncate pr-2" title="${r.description}">${r.description}</div>
+                    <div class="col-span-4 font-mono text-[10px] text-wall-300 bg-wall-900 border-l-2 border-wall-700 pl-2 py-1">${r.threshold_desc}</div>
+                    <div class="col-span-1 font-mono text-[9px] text-wall-500 uppercase tracking-widest">${r.groups[0]}</div>
+                    <div class="col-span-2">${mit}</div>
+                </div>
+            `;
+            container.innerHTML += html;
+        });
+    }
+
+    renderRules('all');
+
+    document.getElementById('ruleCategoryFilter').addEventListener('change', (e) => {
+        renderRules(e.target.value);
+    });
+
+</script>
+</body>
+</html>

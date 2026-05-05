@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLACK WALL — Secure Access</title>
+  <meta name="description" content="BLACK WALL SIEM — Authenticated SOC Console Access. Enter your credentials to proceed.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            wall: {
+              950: '#050505',
+              900: '#0a0a0a',
+              850: '#0f0f0f',
+              800: '#141414',
+              700: '#1a1a1a',
+              600: '#222222',
+              500: '#333333',
+              400: '#555555',
+              300: '#888888',
+              200: '#aaaaaa',
+              100: '#cccccc',
+            },
+            accent: {
+              DEFAULT: '#c8ff00',
+              dark: '#9abb00',
+              glow: 'rgba(200, 255, 0, 0.15)',
+            },
+            threat: {
+              critical: '#ff4b4b',
+              high: '#ff8c00',
+              medium: '#ffc107',
+              low: '#4caf50',
+              info: '#2196f3',
+            }
+          },
+          fontFamily: {
+            mono: ['"JetBrains Mono"', 'monospace'],
+            sans: ['"Inter"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    ::selection { background: #c8ff00; color: #050505; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #0a0a0a; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #c8ff00; }
+
+    body {
+      background: #050505;
+      color: #cccccc;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Grid background */
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(200,255,0,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,255,0,0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* Noise texture */
+    .noise-overlay::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.02'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Scanline */
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100vh); }
+    }
+    .scanline {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(200,255,0,0.08), transparent);
+      animation: scanline 10s linear infinite;
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* Glow pulse on logo */
+    @keyframes logoPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(200,255,0,0.4); }
+      50%       { box-shadow: 0 0 0 10px rgba(200,255,0,0); }
+    }
+    .logo-pulse { animation: logoPulse 3s ease-in-out infinite; }
+
+    /* Input focus glow */
+    .input-field {
+      background: #141414;
+      border: 1px solid #222222;
+      color: #cccccc;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      width: 100%;
+      padding: 12px 14px 12px 42px;
+      outline: none;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .input-field:focus {
+      border-color: rgba(200,255,0,0.5);
+      box-shadow: 0 0 0 3px rgba(200,255,0,0.06), inset 0 0 20px rgba(200,255,0,0.02);
+    }
+    .input-field::placeholder { color: #555555; }
+    .input-field:-webkit-autofill,
+    .input-field:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 1000px #141414 inset;
+      -webkit-text-fill-color: #cccccc;
+    }
+
+    /* Input wrapper icon */
+    .input-wrapper { position: relative; }
+    .input-icon {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #555555;
+      pointer-events: none;
+      transition: color 0.2s;
+    }
+    .input-wrapper:focus-within .input-icon { color: #c8ff00; }
+
+    /* Eye toggle */
+    .eye-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #555555;
+      padding: 2px;
+      transition: color 0.2s;
+    }
+    .eye-toggle:hover { color: #c8ff00; }
+
+    /* Submit button */
+    .btn-login {
+      width: 100%;
+      padding: 13px;
+      background: #c8ff00;
+      color: #050505;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+    }
+    .btn-login::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.4s ease;
+    }
+    .btn-login:hover { background: #d4ff1a; box-shadow: 0 0 25px rgba(200,255,0,0.3); }
+    .btn-login:hover::before { left: 100%; }
+    .btn-login:active { transform: scale(0.99); }
+    .btn-login:disabled {
+      background: #333;
+      color: #555;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* Card */
+    .login-card {
+      background: #0a0a0a;
+      border: 1px solid rgba(200,255,0,0.08);
+      position: relative;
+      overflow: hidden;
+    }
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #c8ff00, transparent);
+      opacity: 0.6;
+    }
+
+    /* Blink cursor */
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+    .cursor-blink::after {
+      content: '█';
+      color: #c8ff00;
+      animation: blink 1s infinite;
+      margin-left: 2px;
+      font-size: 0.8em;
+    }
+
+    /* Shake animation for wrong password */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      15%  { transform: translateX(-8px); }
+      30%  { transform: translateX(8px); }
+      45%  { transform: translateX(-6px); }
+      60%  { transform: translateX(6px); }
+      75%  { transform: translateX(-3px); }
+      90%  { transform: translateX(3px); }
+    }
+    .shake { animation: shake 0.5s ease; }
+
+    /* Fade-in */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fadeInUp 0.6s ease forwards; }
+    .fade-in-delay { animation: fadeInUp 0.6s 0.15s ease both; }
+    .fade-in-delay-2 { animation: fadeInUp 0.6s 0.3s ease both; }
+
+    /* Decorative corner lines */
+    .corner-tl, .corner-tr, .corner-bl, .corner-br {
+      position: absolute;
+      width: 14px; height: 14px;
+      pointer-events: none;
+    }
+    .corner-tl { top: -1px;  left: -1px;  border-top: 2px solid #c8ff00; border-left: 2px solid #c8ff00; }
+    .corner-tr { top: -1px;  right: -1px; border-top: 2px solid #c8ff00; border-right: 2px solid #c8ff00; }
+    .corner-bl { bottom: -1px; left: -1px;  border-bottom: 2px solid #c8ff00; border-left: 2px solid #c8ff00; }
+    .corner-br { bottom: -1px; right: -1px; border-bottom: 2px solid #c8ff00; border-right: 2px solid #c8ff00; }
+
+    /* Status ticker */
+    @keyframes tickerScroll {
+      0%   { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    .ticker-inner { animation: tickerScroll 24s linear infinite; white-space: nowrap; }
+
+    /* Checkbox */
+    input[type="checkbox"] { accent-color: #c8ff00; }
+
+    /* Alert */
+    .alert-error {
+      background: rgba(255,75,75,0.08);
+      border: 1px solid rgba(255,75,75,0.3);
+      color: #ff4b4b;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Live pulse dot */
+    @keyframes livePulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(200,255,0,0.5); }
+      50%       { box-shadow: 0 0 0 5px rgba(200,255,0,0); }
+    }
+    .live-dot { animation: livePulse 2s ease-in-out infinite; }
+  </style>
+</head>
+<body class="noise-overlay grid-bg min-h-screen flex flex-col">
+
+  <!-- Scanline -->
+  <div class="scanline"></div>
+
+  <!-- Top bar -->
+  <header class="border-b border-wall-700 bg-wall-900/60 backdrop-blur-md px-6 py-3 flex items-center justify-between z-10 relative">
+    <a href="#" class="flex items-center gap-2.5 text-wall-100 hover:text-accent transition-colors group">
+      <div class="logo-pulse rounded-full flex items-center justify-center p-1">
+        <i data-lucide="shield" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <span class="font-black tracking-widest text-sm block leading-tight">BLACK WALL</span>
+        <span class="font-mono text-[9px] tracking-widest text-wall-500 uppercase group-hover:text-accent transition-colors">SIEM Console v4.2</span>
+      </div>
+    </a>
+
+    <div class="flex items-center gap-4">
+      <!-- Live status -->
+      <div class="hidden sm:flex items-center gap-1.5">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-accent live-dot"></span>
+        </span>
+        <span class="font-mono text-[10px] tracking-widest text-accent uppercase">Systems Online</span>
+      </div>
+      <!-- Clock -->
+      <div class="font-mono text-xs text-wall-500" id="liveClock">--:--:--</div>
+    </div>
+  </header>
+
+  <!-- Status ticker -->
+  <div class="overflow-hidden bg-wall-900/40 border-b border-wall-700/50 py-1.5 px-0 relative">
+    <div class="ticker-inner font-mono text-[10px] text-wall-500 tracking-wider">
+      &nbsp;&nbsp;&nbsp;
+      <span class="text-threat-low">●</span> ALL SYSTEMS OPERATIONAL &nbsp;///&nbsp;
+      <span class="text-accent">▶</span> INTRUSION DETECTION ENGINE: ACTIVE &nbsp;///&nbsp;
+      <span class="text-threat-critical">▲</span> 3 CRITICAL ALERTS PENDING REVIEW &nbsp;///&nbsp;
+      <span class="text-threat-low">●</span> AI MODEL RF-V2 LOADED &nbsp;///&nbsp;
+      <span class="text-accent">▶</span> AGENTS CONNECTED: 4/4 &nbsp;///&nbsp;
+      <span class="text-wall-300">⬡</span> ENCRYPTION: AES-256-GCM &nbsp;///&nbsp;
+      <span class="text-threat-info">●</span> LOG PIPELINE: 4.2K EVT/SEC &nbsp;///&nbsp;
+      <span class="text-accent">▶</span> MFA ENFORCEMENT: ENABLED &nbsp;&nbsp;&nbsp;
+    </div>
+  </div>
+
+  <!-- Main -->
+  <main class="flex-1 flex items-center justify-center px-4 py-12 relative z-10">
+
+    <!-- Decorative side columns (desktop) -->
+    <div class="hidden xl:flex flex-col gap-4 mr-16 w-52 opacity-40">
+      <div class="font-mono text-[9px] text-wall-500 tracking-widest uppercase mb-2">// sys.monitor</div>
+      <div id="sideTerminal" class="space-y-1.5 font-mono text-[10px] text-wall-400"></div>
+    </div>
+
+    <!-- Login Card -->
+    <div class="w-full max-w-md fade-in">
+
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-accent/10 border border-accent/20 mb-5">
+          <span class="w-1.5 h-1.5 bg-accent rounded-full animate-ping"></span>
+          <span class="font-mono text-[10px] text-accent tracking-widest uppercase">Secure Access Portal</span>
+        </div>
+        <h1 class="text-2xl font-black text-wall-100 tracking-tight mb-1 cursor-blink">Authentication Required</h1>
+        <p class="font-mono text-xs text-wall-400">Authorized SOC personnel only. All access is monitored and logged.</p>
+      </div>
+
+      <!-- Card -->
+      <div class="login-card p-7 relative fade-in-delay">
+        <!-- Corner decorators -->
+        <div class="corner-tl"></div>
+        <div class="corner-tr"></div>
+        <div class="corner-bl"></div>
+        <div class="corner-br"></div>
+
+        <!-- Security badge -->
+        <div class="flex items-center justify-between mb-6 pb-5 border-b border-wall-700">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+            </svg>
+            <span class="font-mono text-[10px] text-wall-400 tracking-wider">TLS 1.3 / AES-256</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 bg-threat-low rounded-full"></span>
+            <span class="font-mono text-[10px] text-threat-low">Connection Secure</span>
+          </div>
+        </div>
+
+        <!-- Error alert (hidden by default) -->
+        <div id="errorAlert" class="alert-error mb-5 hidden">
+          <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+          </svg>
+          <span id="errorMsg">Invalid credentials. Access denied.</span>
+        </div>
+
+        <form id="loginForm" class="space-y-5" novalidate>
+
+          <!-- Operator ID -->
+          <div>
+            <label for="username" class="block font-mono text-[10px] text-wall-400 tracking-widest uppercase mb-2">Operator ID</label>
+            <div class="input-wrapper">
+              <svg class="input-icon w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+              </svg>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                class="input-field"
+                placeholder="operator@blackwall.soc"
+                autocomplete="username"
+                spellcheck="false"
+              >
+            </div>
+          </div>
+
+          <!-- Passphrase -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label for="password" class="block font-mono text-[10px] text-wall-400 tracking-widest uppercase">Passphrase</label>
+              <a href="#" class="font-mono text-[10px] text-accent hover:underline" id="forgotLink">Forgot credentials?</a>
+            </div>
+            <div class="input-wrapper">
+              <svg class="input-icon w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+              </svg>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="input-field"
+                placeholder="••••••••••••"
+                autocomplete="current-password"
+              >
+              <button type="button" class="eye-toggle" id="eyeToggle" title="Toggle visibility">
+                <svg id="eyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- MFA Code -->
+          <div id="mfaSection" class="hidden">
+            <label for="mfaCode" class="block font-mono text-[10px] text-wall-400 tracking-widest uppercase mb-2">MFA Token</label>
+            <div class="input-wrapper">
+              <svg class="input-icon w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.864 4.243A7.5 7.5 0 0119.5 10.5c0 2.92-.556 5.709-1.568 8.268M5.742 6.364A7.465 7.465 0 004.5 10.5a7.464 7.464 0 01-1.15 3.993m1.989 3.559A11.209 11.209 0 008.25 10.5a3.75 3.75 0 117.5 0c0 .527-.02 1.049-.06 1.565M12 10.5a14.94 14.94 0 01-3.6 9.75m6.633-4.596a18.666 18.666 0 01-2.485 5.33"/>
+              </svg>
+              <input
+                type="text"
+                id="mfaCode"
+                name="mfaCode"
+                class="input-field"
+                placeholder="000 000"
+                maxlength="7"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+              >
+            </div>
+          </div>
+
+          <!-- Remember + options -->
+          <div class="flex items-center justify-between">
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="checkbox" id="rememberMe" class="w-3.5 h-3.5 rounded-none">
+              <span class="font-mono text-[11px] text-wall-400 group-hover:text-wall-200 transition-colors">Remember this terminal</span>
+            </label>
+            <button type="button" id="mfaToggle" class="font-mono text-[10px] text-wall-500 hover:text-accent transition-colors">+ MFA</button>
+          </div>
+
+          <!-- Submit -->
+          <button type="submit" class="btn-login" id="loginBtn">
+            <span id="loginBtnText">ACCESS CONSOLE</span>
+          </button>
+
+        </form>
+
+        <!-- Divider -->
+        <div class="mt-6 pt-5 border-t border-wall-700 flex items-center gap-3">
+          <div class="flex-1 h-px bg-wall-700"></div>
+          <span class="font-mono text-[9px] text-wall-500 tracking-widest uppercase">or</span>
+          <div class="flex-1 h-px bg-wall-700"></div>
+        </div>
+
+        <!-- SSO -->
+        <button type="button" class="mt-4 w-full py-3 border border-wall-600 hover:border-accent/30 hover:bg-accent/5 transition-all duration-200 flex items-center justify-center gap-2.5 group" id="ssoBtn">
+          <svg class="w-3.5 h-3.5 text-wall-500 group-hover:text-accent transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/>
+          </svg>
+          <span class="font-mono text-[11px] text-wall-400 group-hover:text-wall-200 tracking-wider transition-colors uppercase">SSO / Active Directory</span>
+        </button>
+      </div>
+
+      <!-- Footer note -->
+      <p class="text-center font-mono text-[10px] text-wall-500 mt-5 fade-in-delay-2">
+        Unauthorized access attempts are prosecuted under <span class="text-wall-400">§ CFAA 18 U.S.C. 1030</span>.<br>
+        This session will be recorded and archived for <span class="text-wall-400">90 days</span>.
+      </p>
+
+    </div>
+
+    <!-- Decorative right terminal (desktop) -->
+    <div class="hidden xl:flex flex-col gap-4 ml-16 w-52 opacity-40">
+      <div class="font-mono text-[9px] text-wall-500 tracking-widest uppercase mb-2">// auth.log</div>
+      <div id="rightLog" class="space-y-1.5 font-mono text-[10px] text-wall-400"></div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-wall-700 bg-wall-900/40 py-3 px-6 flex items-center justify-between">
+    <span class="font-mono text-[10px] text-wall-500">BLACK WALL SIEM © 2026 — All rights reserved</span>
+    <div class="flex items-center gap-4">
+      <span class="font-mono text-[10px] text-wall-500">v4.2.1-stable</span>
+      <span class="font-mono text-[10px] text-threat-low">● Secure</span>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    // ========================
+    // Clock
+    // ========================
+    function updateClock() {
+      document.getElementById('liveClock').textContent =
+        new Date().toLocaleTimeString('fr-FR', { hour12: false });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // ========================
+    // Eye toggle
+    // ========================
+    const eyeToggle = document.getElementById('eyeToggle');
+    const passwordInput = document.getElementById('password');
+    eyeToggle.addEventListener('click', () => {
+      const isHidden = passwordInput.type === 'password';
+      passwordInput.type = isHidden ? 'text' : 'password';
+      document.getElementById('eyeIcon').innerHTML = isHidden
+        ? `<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>`
+        : `<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>`;
+    });
+
+    // ========================
+    // MFA toggle
+    // ========================
+    const mfaToggle = document.getElementById('mfaToggle');
+    const mfaSection = document.getElementById('mfaSection');
+    let mfaVisible = false;
+    mfaToggle.addEventListener('click', () => {
+      mfaVisible = !mfaVisible;
+      mfaSection.classList.toggle('hidden', !mfaVisible);
+      mfaToggle.textContent = mfaVisible ? '− MFA' : '+ MFA';
+      mfaToggle.style.color = mfaVisible ? '#c8ff00' : '';
+    });
+
+    // ========================
+    // Form submission (demo)
+    // ========================
+    const form = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginBtnText = document.getElementById('loginBtnText');
+    const errorAlert = document.getElementById('errorAlert');
+    const errorMsg = document.getElementById('errorMsg');
+    const loginCard = document.querySelector('.login-card');
+
+    // Demo credentials
+    const DEMO_USER = 'admin';
+    const DEMO_PASS = 'blackwall2026';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorAlert.classList.add('hidden');
+
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value;
+
+      if (!user || !pass) {
+        showError('All fields are required.');
+        return;
+      }
+
+      // Loading state
+      loginBtn.disabled = true;
+      loginBtnText.innerHTML = `
+        <span class="inline-flex items-center gap-2">
+          <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+          </svg>
+          AUTHENTICATING...
+        </span>`;
+
+      await new Promise(r => setTimeout(r, 1600));
+
+      // Demo: accept "admin" / "blackwall2026" or redirect anyway
+      if (user === DEMO_USER && pass === DEMO_PASS) {
+        loginBtnText.innerHTML = `
+          <span class="inline-flex items-center gap-2">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+            </svg>
+            ACCESS GRANTED
+          </span>`;
+        loginBtn.style.background = '#4caf50';
+        await new Promise(r => setTimeout(r, 700));
+        window.location.href = 'dashboard.html';
+      } else {
+        loginBtn.disabled = false;
+        loginBtnText.textContent = 'ACCESS CONSOLE';
+        showError('Invalid credentials. Access denied. Incident logged.');
+        shakeCard();
+      }
+    });
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorAlert.classList.remove('hidden');
+    }
+
+    function shakeCard() {
+      loginCard.classList.remove('shake');
+      void loginCard.offsetWidth; // reflow
+      loginCard.classList.add('shake');
+      loginCard.addEventListener('animationend', () => loginCard.classList.remove('shake'), { once: true });
+    }
+
+    // SSO button (demo)
+    document.getElementById('ssoBtn').addEventListener('click', () => {
+      showError('SSO provider not configured. Contact your system administrator.');
+    });
+
+    // Forgot link (demo)
+    document.getElementById('forgotLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      showError('Password reset requires physical access to the key server. Contact your SOC administrator.');
+    });
+
+    // ========================
+    // Decorative side terminals
+    // ========================
+    const sysLines = [
+      '<span class="text-threat-low">✓</span> kernel: 6.8.0-blackwall',
+      '<span class="text-accent">▶</span> siem_core: running',
+      '<span class="text-accent">▶</span> rf_engine: loaded',
+      '<span class="text-accent">▶</span> log_pipe: 4.2k/s',
+      '<span class="text-threat-low">✓</span> firewall: active',
+      '<span class="text-threat-low">✓</span> network: 4 agents',
+      '<span class="text-threat-medium">⚠</span> alerts: 3 pending',
+      '<span class="text-wall-500">—</span> uptime: 14d 07h',
+    ];
+
+    const authLines = [
+      '<span class="text-threat-low">[OK]</span> 12:18:04 admin',
+      '<span class="text-threat-critical">[FAIL]</span> 12:19:11 root',
+      '<span class="text-threat-critical">[FAIL]</span> 12:19:12 root',
+      '<span class="text-threat-critical">[BAN]</span> 12:19:13 <span class="text-threat-critical">10.0.0.4</span>',
+      '<span class="text-threat-low">[OK]</span> 12:20:33 analyst1',
+      '<span class="text-wall-500">[—]</span> 12:23:58 <span class="text-wall-400">pending...</span>',
+    ];
+
+    const sideTermEl = document.getElementById('sideTerminal');
+    const rightLogEl = document.getElementById('rightLog');
+
+    if (sideTermEl) {
+      sysLines.forEach((line, i) => {
+        setTimeout(() => {
+          const el = document.createElement('div');
+          el.innerHTML = line;
+          el.style.opacity = '0';
+          el.style.transition = 'opacity 0.4s ease';
+          sideTermEl.appendChild(el);
+          requestAnimationFrame(() => { el.style.opacity = '1'; });
+        }, i * 180);
+      });
+    }
+
+    if (rightLogEl) {
+      authLines.forEach((line, i) => {
+        setTimeout(() => {
+          const el = document.createElement('div');
+          el.innerHTML = line;
+          el.style.opacity = '0';
+          el.style.transition = 'opacity 0.4s ease';
+          rightLogEl.appendChild(el);
+          requestAnimationFrame(() => { el.style.opacity = '1'; });
+        }, i * 250 + 300);
+      });
+    }
+
+    // MFA input formatting
+    document.getElementById('mfaCode').addEventListener('input', function() {
+      let val = this.value.replace(/\D/g, '');
+      if (val.length > 3) val = val.slice(0, 3) + ' ' + val.slice(3, 6);
+      this.value = val;
+    });
+  </script>
+</body>
+</html>
