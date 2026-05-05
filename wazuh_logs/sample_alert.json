@@ -5,7 +5,11 @@
       "id": "5710",
       "level": 10,
       "description": "sshd: Attempt to login using a denied user.",
-      "groups": ["syslog", "sshd", "authentication_failed"]
+      "groups": [
+        "syslog",
+        "sshd",
+        "authentication_failed"
+      ]
     },
     "agent": {
       "id": "001",
@@ -20,12 +24,16 @@
     "full_log": "Apr 18 10:15:32 ubuntu-server sshd[12345]: Failed password for invalid user root from 10.0.0.55 port 22 ssh2"
   },
   {
-    "timestamp": "2026-04-18T10:15:33.000+0000",
+    "timestamp": "2026-04-20T10:15:33.000+0000",
     "rule": {
       "id": "5710",
-      "level": 10,
+      "level": 14,
       "description": "sshd: Attempt to login using a denied user.",
-      "groups": ["syslog", "sshd", "authentication_failed"]
+      "groups": [
+        "syslog",
+        "sshd",
+        "authentication_failed"
+      ]
     },
     "agent": {
       "id": "001",
@@ -45,7 +53,12 @@
       "id": "5712",
       "level": 12,
       "description": "sshd: brute force attack detected.",
-      "groups": ["syslog", "sshd", "authentication_failed", "brute_force"]
+      "groups": [
+        "syslog",
+        "sshd",
+        "authentication_failed",
+        "brute_force"
+      ]
     },
     "agent": {
       "id": "001",
@@ -65,7 +78,11 @@
       "id": "31101",
       "level": 6,
       "description": "Web server 404 error.",
-      "groups": ["web", "accesslog", "web_scan"]
+      "groups": [
+        "web",
+        "accesslog",
+        "web_scan"
+      ]
     },
     "agent": {
       "id": "002",
@@ -86,7 +103,11 @@
       "id": "31103",
       "level": 9,
       "description": "SQL Injection attempt detected.",
-      "groups": ["web", "attack", "sql_injection"]
+      "groups": [
+        "web",
+        "attack",
+        "sql_injection"
+      ]
     },
     "agent": {
       "id": "002",

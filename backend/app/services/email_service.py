@@ -8,6 +8,7 @@ Includes rate limiting per alert type to prevent spam.
 
 import logging
 import smtplib
+import time
 from datetime import datetime, timezone
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -92,6 +93,9 @@ def send_alert_email(alert_data: dict, ai_analysis: str = "") -> bool:
     msg.attach(MIMEText(html_body, "html"))
 
     try:
+        # Trick Mailtrap rate limits (free tier allows ~1 email / second)
+        time.sleep(2.5)
+        
         with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=15) as server:
             server.starttls()
             server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)

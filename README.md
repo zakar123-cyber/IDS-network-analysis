@@ -49,6 +49,36 @@ docker compose down -v
 
 ---
 
+## 🔗 Intégration Wazuh (Production)
+
+Le backend BLACK WALL est prêt à recevoir les alertes d'un vrai manager Wazuh en direct. Deux méthodes sont supportées :
+
+### Option 1 : Webhook (Cloud to Local — AWS vers PC)
+Si votre Wazuh est hébergé sur le Cloud (AWS, Azure) et que votre dashboard tourne en local sur votre PC, AWS ne peut pas joindre votre IP privée (`192.168.x.x`). 
+1. Utilisez **Ngrok** (`ngrok http 8000`) pour obtenir une URL publique temporaire, ou **Tailscale** pour un VPN Mesh avec une IP fixe.
+2. Dans le fichier `/var/ossec/etc/ossec.conf` de votre manager Wazuh (AWS), ajoutez :
+   ```xml
+   <integration>
+       <name>custom-blackwall</name>
+       <!-- Remplacez par votre URL Ngrok ou IP Tailscale -->
+       <hook_url>https://VOTRE_URL_NGROK/webhook</hook_url>
+       <level>12</level> <!-- Envoi uniquement des alertes critiques -->
+       <alert_format>json</alert_format>
+   </integration>
+   ```
+3. Redémarrez Wazuh : `sudo systemctl restart wazuh-manager`.
+
+### Option 2 : Volume Partagé (Même machine)
+Si Wazuh et BLACK WALL sont installés sur la **même machine**, modifiez simplement votre `docker-compose.yml` pour lier le vrai dossier Wazuh :
+```yaml
+    volumes:
+      # Ligne à modifier sous le service "backend" :
+      - /var/ossec/logs/alerts:/app/wazuh_logs:ro
+```
+Le thread `wazuh_monitor.py` lira automatiquement le fichier `/app/wazuh_logs/alerts.json` en temps réel.
+
+---
+
 ## 🏗️ Architecture (Docker — 3 services)
 
 ```
