@@ -63,15 +63,24 @@ def test_critical_alert():
     }
 
 
+from app.services.detection_service import analyze_alerts
+from app.repositories.postgres_repository import postgres_repo
+
 @router.post("/webhook")
 def wazuh_webhook(payload: dict):
     """
     Receive a Wazuh alert JSON and run the full processing pipeline.
-    Use as: Wazuh active-response → this endpoint → process_alert()
     """
     try:
+        # 1. Always process and save to PostgreSQL (for main dashboard)
+        analysis_results = analyze_alerts([payload])
+        if analysis_results.get("all_detections"):
+            postgres_repo.save_detections(analysis_results["all_detections"])
+
+        # 2. Process for critical pipeline (AI, Email, SQLite) if level >= CRITICAL_ALERT_LEVEL
         result = process_alert(payload)
-        return {"status": "accepted" if result else "skipped", "alert": result}
+        
+        return {"status": "accepted" if result else "saved_to_history", "alert": result}
     except Exception as e:
         logger.error("Webhook processing error: %s", e)
         return {"status": "error", "detail": str(e)}

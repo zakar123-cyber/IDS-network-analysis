@@ -16,6 +16,8 @@ from datetime import datetime, timezone
 
 from app.config import settings
 from app.services.alert_pipeline import process_alert
+from app.services.detection_service import analyze_alerts
+from app.repositories.postgres_repository import postgres_repo
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +105,13 @@ class WazuhAlertMonitor:
                         continue
                     try:
                         alert = json.loads(line)
+                        
+                        # 1. Save to PostgreSQL
+                        analysis_results = analyze_alerts([alert])
+                        if analysis_results.get("all_detections"):
+                            postgres_repo.save_detections(analysis_results["all_detections"])
+                            
+                        # 2. Critical pipeline
                         result = process_alert(alert)
                         if result:
                             self._alerts_processed += 1

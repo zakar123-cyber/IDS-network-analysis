@@ -49,24 +49,39 @@ docker compose down -v
 
 ---
 
-## 🔗 Intégration Wazuh (Production)
+## 🔗 Déploiement AWS (Production)
 
-Le backend BLACK WALL est prêt à recevoir les alertes d'un vrai manager Wazuh en direct. Deux méthodes sont supportées :
+### 1. Configuration AWS Firewall (Security Group)
+Pour que le dashboard soit accessible depuis l'extérieur, vous devez ouvrir le port **8501** :
+1. Dans la console AWS, allez sur **EC2 > Instances** et sélectionnez votre machine.
+2. Allez dans l'onglet **Security** (en bas) et cliquez sur le lien de votre **Security group**.
+3. Cliquez sur **Edit inbound rules**, puis **Add rule** : 
+   - Type : `Custom TCP`
+   - Port : `8501`
+   - Source : `0.0.0.0/0` (Anywhere)
+4. Sauvegardez.
 
-### Option 1 : Webhook (Cloud to Local — AWS vers PC)
-Si votre Wazuh est hébergé sur le Cloud (AWS, Azure) et que votre dashboard tourne en local sur votre PC, AWS ne peut pas joindre votre IP privée (`192.168.x.x`). 
-1. Utilisez **Ngrok** (`ngrok http 8000`) pour obtenir une URL publique temporaire, ou **Tailscale** pour un VPN Mesh avec une IP fixe.
-2. Dans le fichier `/var/ossec/etc/ossec.conf` de votre manager Wazuh (AWS), ajoutez :
+### 2. Accès au Dashboard SOC
+Une fois le pare-feu AWS configuré, accédez au dashboard interactif via votre navigateur :
+- **Lien :** `http://<VOTRE_IP_PUBLIQUE_AWS>:8501`
+- **Opérateur :** `admin`
+- **Passphrase :** `blackwall2026`
+
+### 3. Intégration Wazuh Webhook (Docker-to-Docker)
+Puisque Wazuh et BLACK WALL tournent tous les deux via Docker sur la même machine AWS, l'intégration se fait via l'IP Privée de l'instance AWS.
+
+1. Récupérez votre IP Privée AWS (ex: 172.31.X.X) : `hostname -I | awk '{print $1}'`
+2. Entrez dans le conteneur Wazuh : `docker exec -it single-node-wazuh.manager-1 bash`
+3. Ajoutez le webhook à la toute fin du fichier `/var/ossec/etc/ossec.conf` (**avant** la balise finale `</ossec_config>`) :
    ```xml
    <integration>
        <name>custom-blackwall</name>
-       <!-- Remplacez par votre URL Ngrok ou IP Tailscale -->
-       <hook_url>https://VOTRE_URL_NGROK/webhook</hook_url>
-       <level>12</level> <!-- Envoi uniquement des alertes critiques -->
+       <hook_url>http://<VOTRE_IP_PRIVEE>:8000/webhook</hook_url>
+       <level>12</level>
        <alert_format>json</alert_format>
    </integration>
    ```
-3. Redémarrez Wazuh : `sudo systemctl restart wazuh-manager`.
+4. Quittez le conteneur (`exit`) et redémarrez-le : `docker restart single-node-wazuh.manager-1`.
 
 ### Option 2 : Volume Partagé (Même machine)
 Si Wazuh et BLACK WALL sont installés sur la **même machine**, modifiez simplement votre `docker-compose.yml` pour lier le vrai dossier Wazuh :

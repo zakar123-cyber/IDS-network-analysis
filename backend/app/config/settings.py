@@ -45,7 +45,8 @@ EMAIL_COOLDOWN_SECONDS: int = int(os.getenv("EMAIL_COOLDOWN_SECONDS", "300"))
 # ═══════════════════════════════════════════
 STATIC_THRESHOLD_ALERT_LEVEL: int = int(os.getenv("STATIC_THRESHOLD_ALERT_LEVEL", "8"))
 STATIC_THRESHOLD_CONNECTIONS: int = int(os.getenv("STATIC_THRESHOLD_CONNECTIONS", "50"))
-ALERT_MIN_LEVEL: int = int(os.getenv("ALERT_MIN_LEVEL", "12"))
+ALERT_MIN_LEVEL: int = int(os.getenv("ALERT_MIN_LEVEL", "9"))
+CRITICAL_ALERT_LEVEL: int = int(os.getenv("CRITICAL_ALERT_LEVEL", "12"))
 
 # ═══════════════════════════════════════════
 # Wazuh Log Surveillance

@@ -26,7 +26,7 @@ def parse_alert(raw: dict) -> dict | None:
     rule = raw.get("rule", {})
     level = rule.get("level", 0)
 
-    if level < settings.ALERT_MIN_LEVEL:
+    if level < settings.CRITICAL_ALERT_LEVEL:
         return None
 
     return {
