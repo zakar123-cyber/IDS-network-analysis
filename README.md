@@ -51,46 +51,63 @@ docker compose down -v
 
 ## 🔗 Déploiement AWS (Production)
 
-### 1. Configuration AWS Firewall (Security Group)
-Pour que le dashboard soit accessible depuis l'extérieur, vous devez ouvrir le port **8501** :
-1. Dans la console AWS, allez sur **EC2 > Instances** et sélectionnez votre machine.
-2. Allez dans l'onglet **Security** (en bas) et cliquez sur le lien de votre **Security group**.
-3. Cliquez sur **Edit inbound rules**, puis **Add rule** : 
-   - Type : `Custom TCP`
-   - Port : `8501`
-   - Source : `0.0.0.0/0` (Anywhere)
-4. Sauvegardez.
+> 📖 Pour un guide **détaillé étape par étape**, voir [`AWS_DEPLOYMENT_GUIDE.md`](AWS_DEPLOYMENT_GUIDE.md)
 
-### 2. Accès au Dashboard SOC
-Une fois le pare-feu AWS configuré, accédez au dashboard interactif via votre navigateur :
-- **Lien :** `http://<VOTRE_IP_PUBLIQUE_AWS>:8501`
+### 1. Configuration AWS Firewall (Security Group)
+Ouvrez **deux ports** dans votre Security Group AWS :
+
+| Type | Port | Rôle |
+|------|------|------|
+| Custom TCP | `8501` | Dashboard SIEM (Frontend Nginx) |
+| Custom TCP | `8000` | API Backend (FastAPI) |
+
+### 2. Déploiement des conteneurs
+```bash
+cd ~/IDS-network-analysis
+cp .env.example .env      # Puis éditez avec vos clés API
+docker compose up --build -d
+```
+
+### 3. Accès au Dashboard SOC
+- **URL :** `http://<VOTRE_IP_PUBLIQUE_AWS>:8501`
 - **Opérateur :** `admin`
 - **Passphrase :** `blackwall2026`
 
-### 3. Intégration Wazuh Webhook (Docker-to-Docker)
-Puisque Wazuh et BLACK WALL tournent tous les deux via Docker sur la même machine AWS, l'intégration se fait via l'IP Privée de l'instance AWS.
+### 4. Intégration Wazuh (2 étapes obligatoires)
 
-1. Récupérez votre IP Privée AWS (ex: 172.31.X.X) : `hostname -I | awk '{print $1}'`
-2. Entrez dans le conteneur Wazuh : `docker exec -it single-node-wazuh.manager-1 bash`
-3. Ajoutez le webhook à la toute fin du fichier `/var/ossec/etc/ossec.conf` (**avant** la balise finale `</ossec_config>`) :
-   ```xml
-   <integration>
-       <name>custom-blackwall</name>
-       <hook_url>http://<VOTRE_IP_PRIVEE>:8000/webhook</hook_url>
-       <level>12</level>
-       <alert_format>json</alert_format>
-   </integration>
-   ```
-4. Quittez le conteneur (`exit`) et redémarrez-le : `docker restart single-node-wazuh.manager-1`.
-
-### Option 2 : Volume Partagé (Même machine)
-Si Wazuh et BLACK WALL sont installés sur la **même machine**, modifiez simplement votre `docker-compose.yml` pour lier le vrai dossier Wazuh :
-```yaml
-    volumes:
-      # Ligne à modifier sous le service "backend" :
-      - /var/ossec/logs/alerts:/app/wazuh_logs:ro
+**Étape A — Créer le script d'intégration :**
+```bash
+docker exec -it single-node-wazuh.manager-1 bash -c '
+cat > /var/ossec/integrations/custom-blackwall << "EOF"
+#!/bin/sh
+ALERT_FILE=$1
+HOOK_URL=$3
+curl -s -X POST "$HOOK_URL" -H "Content-Type: application/json" -d @"$ALERT_FILE"
+exit 0
+EOF
+chmod 750 /var/ossec/integrations/custom-blackwall
+chown root:wazuh /var/ossec/integrations/custom-blackwall'
 ```
-Le thread `wazuh_monitor.py` lira automatiquement le fichier `/app/wazuh_logs/alerts.json` en temps réel.
+
+**Étape B — Ajouter la configuration webhook :**
+Ajoutez ce bloc dans `/var/ossec/etc/ossec.conf` (avant `</ossec_config>`) :
+```xml
+<integration>
+    <name>custom-blackwall</name>
+    <hook_url>http://<VOTRE_IP_PRIVEE>:8000/webhook</hook_url>
+    <level>8</level>
+    <alert_format>json</alert_format>
+</integration>
+```
+Puis redémarrez : `docker restart single-node-wazuh.manager-1`
+
+### Niveaux d'alerte (Configuration recommandée)
+
+| Paramètre | Valeur | Rôle |
+|-----------|--------|------|
+| Wazuh `<level>` | `8` | Seuil d'envoi vers le webhook |
+| `ALERT_MIN_LEVEL` | `8` | Seuil d'affichage dashboard |
+| `CRITICAL_ALERT_LEVEL` | `12` | Seuil pour IA + email |
 
 ---
 

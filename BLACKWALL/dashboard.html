@@ -1404,7 +1404,7 @@
 
         // ── Wazuh Rule Templates ──
         // We don't need fake rules anymore, we get data from backend!
-        const BackendUrl = 'http://localhost:8000';
+        const BackendUrl = `${window.location.protocol}//${window.location.hostname}:8000`;
 
         function levelClass(l) { return l >= 10 ? 'level-critical' : l >= 7 ? 'level-high' : l >= 4 ? 'level-medium' : 'level-low'; }
         function actionClass(a) {
@@ -2152,7 +2152,9 @@
                 showToast("✗ Backend unavailable — upload a file to analyze", '#ff8c00');
             }
         }
-        // document.addEventListener('DOMContentLoaded', loadInitialData); // Disabled by user request for clean start
+        document.addEventListener('DOMContentLoaded', loadInitialData);
+        // Auto-refresh every 30 seconds to pull new Wazuh alerts
+        setInterval(() => { if (!logPaused) loadInitialData(); }, 30000);
 
         function updateCharts(attackMap, levelsArr, avgRisk, rawAlerts) {
             const colors = ['#ff4b4b', '#ff8c00', '#ffc107', '#2196f3', '#9b59b6', '#4caf50'];
