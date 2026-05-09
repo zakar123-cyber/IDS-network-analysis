@@ -120,7 +120,7 @@ Cette adresse IP est nécessaire pour la communication Docker-to-Docker entre Wa
 hostname -I | awk '{print $1}'
 ```
 
-**Exemple de sortie :** `172.31.30.201`
+**Exemple de sortie :** `172.30.x.x votre ip privé`
 
 > 📝 **Notez cette IP**, vous en aurez besoin dans les étapes suivantes.
 
@@ -160,14 +160,14 @@ docker exec -it single-node-wazuh.manager-1 ls -la /var/ossec/integrations/custo
 
 ### Option A : Via commande sed (automatique)
 
-Remplacez `172.31.30.201` par votre IP privée de l'Étape 6 :
+Remplacez `172.30.x.x` par votre IP privée de l'Étape 6 :
 
 ```bash
 docker exec -it single-node-wazuh.manager-1 bash -c '
 sed -i "/<\/ossec_config>/i\\
   <integration>\\
       <name>custom-blackwall</name>\\
-      <hook_url>http://172.31.30.201:8000/webhook</hook_url>\\
+      <hook_url>http://172.30.x.x:8000/webhook</hook_url>\\
       <level>8</level>\\
       <alert_format>json</alert_format>\\
   </integration>" /var/ossec/etc/ossec.conf
@@ -190,7 +190,7 @@ Ajoutez ce bloc **juste avant** la dernière ligne `</ossec_config>` :
 ```xml
   <integration>
       <name>custom-blackwall</name>
-      <hook_url>http://172.31.30.201:8000/webhook</hook_url>
+      <hook_url>http://172.30.x.x:8000/webhook</hook_url>
       <level>8</level>
       <alert_format>json</alert_format>
   </integration>
@@ -283,7 +283,7 @@ curl -X POST http://127.0.0.1:8000/webhook \
 
 ```bash
 docker exec -it single-node-wazuh.manager-1 bash -c \
-  "curl -s -o /dev/null -w '%{http_code}' http://172.31.30.201:8000/health"
+  "curl -s -o /dev/null -w '%{http_code}' http://172.30.x.x:8000/health"
 ```
 
 **Résultat attendu :** `200`
