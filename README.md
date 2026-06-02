@@ -1,4 +1,4 @@
-# 🛡️ BLACK WALL — Système de Détection d'Intrusions Pédagogique
+# 🛡️ BLACK WALL — Système de Détection d'Intrusions Pédagogique (PFA)
 
 > **BLACK WALL** est un dashboard pédagogique de type IDS/SIEM (Intrusion Detection System / Security Information & Event Management) conçu pour les établissements scolaires et universitaires. Il analyse le trafic réseau (PCAP) et les alertes (JSON Wazuh), applique des règles de détection statiques et un scoring ML simulé, puis restitue les résultats de manière "vulgarisée" via une console analytique SOC.
 
